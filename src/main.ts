@@ -3,7 +3,7 @@ import {
     AxesHelper,
     Clock,
     GridHelper,
-    LoadingManager,
+    // LoadingManager,
     PCFSoftShadowMap,
     PerspectiveCamera,
     Scene,
@@ -31,7 +31,7 @@ renderer.shadowMap.type = PCFSoftShadowMap
 const scene = new Scene()
 
     // ===== 👨🏻‍💼 LOADING MANAGER =====
-const loadingManager = new LoadingManager(console.log, console.log, console.error)
+// const loadingManager = new LoadingManager(console.log, console.log, console.error)
 
 const { ambientLight, pointLight, pointLightHelper } = getLights(gui)
 scene.add(ambientLight, pointLight, pointLightHelper)
