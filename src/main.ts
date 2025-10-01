@@ -1,4 +1,3 @@
-import GUI from 'lil-gui';
 import { AxesHelper, Clock, GridHelper, PCFSoftShadowMap, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Stats from 'stats.js';
