@@ -21,19 +21,6 @@ const scene = new Scene();
 const { ambientLight, pointLight, pointLightHelper } = getLights();
 scene.add(ambientLight, pointLight, pointLightHelper);
 
-// dummy cube for scene setup
-scene.add(
-    new Mesh(
-        new BoxGeometry(1, 1, 1),
-        new MeshStandardMaterial({
-            color: '#f69f1f',
-            metalness: 0.5,
-            roughness: 0.7,
-        }),
-    )
-);
-scene.children[scene.children.length - 1].position.y = 0.5;
-
 const camera = new Camera(canvas, new Vector3(0, 2, 0));
 
 // ===== 🪄 HELPERS =====
