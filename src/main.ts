@@ -1,16 +1,13 @@
-import { AxesHelper, Clock, GridHelper, PCFSoftShadowMap, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { AxesHelper, BoxGeometry, Clock, GridHelper, Mesh, MeshStandardMaterial, PCFSoftShadowMap, Scene, Vector3, WebGLRenderer } from 'three';
 import Stats from 'stats.js';
-import * as animations from './helpers/animations';
 import { resizeRendererToDisplaySize } from './helpers/responsiveness';
 import './style.css';
-import { getDemoObjects } from './getDemoObjects';
 import { getLights } from './getLights';
 import { getGui } from './getGui';
+import { getRoom } from './getRoom';
+import { Camera } from './getCamera';
 
 const gui = getGui();
-
-const animation = { enabled: true, play: true };
 
 // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
 const canvas = document.createElement('canvas');
@@ -24,19 +21,20 @@ const scene = new Scene();
 const { ambientLight, pointLight, pointLightHelper } = getLights();
 scene.add(ambientLight, pointLight, pointLightHelper);
 
-const { cube, plane } = getDemoObjects(gui, animation);
-scene.add(cube, plane);
+// dummy cube for scene setup
+scene.add(
+    new Mesh(
+        new BoxGeometry(1, 1, 1),
+        new MeshStandardMaterial({
+            color: '#f69f1f',
+            metalness: 0.5,
+            roughness: 0.7,
+        }),
+    )
+);
+scene.children[scene.children.length - 1].position.y = 0.5;
 
-// ===== 🎥 CAMERA =====
-const camera = new PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-camera.position.set(2, 2, 5);
-
-// ===== 🕹️ CONTROLS =====
-const cameraControls = new OrbitControls(camera, canvas);
-cameraControls.target = cube.position.clone();
-cameraControls.enableDamping = true;
-cameraControls.autoRotate = false;
-cameraControls.update();
+const camera = new Camera(canvas, new Vector3(0, 2, 0));
 
 // ===== 🪄 HELPERS =====
 const axesHelper = new AxesHelper(4);
@@ -55,19 +53,12 @@ document.body.appendChild(stats.dom);
 // ==== 🐞 DEBUG GUI ====
 const helpersFolder = gui.addFolder('Helpers');
 gui.addFolder('Helpers');
-console.log(gui.folders);
 helpersFolder.add(axesHelper, 'visible').name('axes');
 helpersFolder.add(pointLightHelper, 'visible').name('pointLight');
 
-// persist GUI state in local storage on changes
-gui.onFinishChange(() => {
-    const guiState = gui.save();
-    localStorage.setItem('guiState', JSON.stringify(guiState));
-});
-
-// load GUI state if available in local storage
-const guiState = localStorage.getItem('guiState');
-if (guiState) gui.load(JSON.parse(guiState));
+// Objects
+const room = await getRoom();
+scene.add(room);
 
 // reset GUI state button
 function resetGui() {
@@ -82,20 +73,14 @@ function animate() {
     requestAnimationFrame(animate);
 
     stats.begin();
-    if (animation.enabled && animation.play) {
-        animations.rotate(cube, clock, Math.PI / 3);
-        animations.bounce(cube, clock, 1, 0.5, 0.5);
-    }
 
     if (resizeRendererToDisplaySize(renderer)) {
-        const canvas = renderer.domElement;
-        camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        camera.updateProjectionMatrix();
+        camera.updateAspect(renderer.domElement.clientWidth / renderer.domElement.clientHeight);
     }
 
-    cameraControls.update();
+    camera.tick();
 
-    renderer.render(scene, camera);
+    renderer.render(scene, camera.perspective);
     stats.end();
 }
 
