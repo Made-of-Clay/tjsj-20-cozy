@@ -1,4 +1,4 @@
-import { AxesHelper, BoxGeometry, Clock, GridHelper, Mesh, MeshStandardMaterial, PCFSoftShadowMap, Scene, Vector3, WebGLRenderer } from 'three';
+import { AxesHelper, GridHelper, PCFSoftShadowMap, Scene, WebGLRenderer } from 'three';
 import Stats from 'stats.js';
 import { resizeRendererToDisplaySize } from './helpers/responsiveness';
 import './style.css';
@@ -21,7 +21,7 @@ const scene = new Scene();
 const { ambientLight, pointLight, pointLightHelper } = getLights();
 scene.add(ambientLight, pointLight, pointLightHelper);
 
-const camera = new Camera(canvas, new Vector3(0, 2, 0));
+const camera = new Camera(canvas);
 
 // ===== 🪄 HELPERS =====
 const axesHelper = new AxesHelper(4);
@@ -33,7 +33,7 @@ gridHelper.position.y = -0.01;
 scene.add(gridHelper);
 
 // ===== 📈 STATS & CLOCK =====
-const clock = new Clock();
+// const clock = new Clock();
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 
