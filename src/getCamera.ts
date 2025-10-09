@@ -1,4 +1,4 @@
-import { Group, PerspectiveCamera } from 'three';
+import { PerspectiveCamera } from 'three';
 import { getGui } from './getGui';
 import GUI from 'lil-gui';
 
