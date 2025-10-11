@@ -5,7 +5,7 @@ import './style.css';
 import { getLights } from './getLights';
 import { getGui } from './getGui';
 import { getRoom } from './getRoom';
-import { Camera } from './getCamera';
+import { Camera, DevCamera } from './getCamera';
 
 const gui = getGui();
 
@@ -30,7 +30,10 @@ scene.add(axesHelper);
 
 const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
 gridHelper.position.y = -0.01;
+gridHelper.visible = false;
 scene.add(gridHelper);
+
+gui.add(gridHelper, 'visible').name('Grid Visibility');
 
 // ===== 📈 STATS & CLOCK =====
 // const clock = new Clock();
@@ -54,20 +57,40 @@ function resetGui() {
 }
 gui.add({ resetGui }, 'resetGui').name('RESET');
 
-gui.close();
+// gui.close();
+
+// const shelfHeight = 4;
+// const bookshelf = new Mesh(
+//     new PlaneGeometry(4, shelfHeight, 10, 10),
+//     new MeshStandardMaterial({
+//         color: 'white',
+//         wireframe: true,
+//     })
+// );
+// bookshelf.position.y = shelfHeight / 2;
+// scene.add(bookshelf);
+
+const devCamera = new DevCamera(canvas);
+
+const useDevCamera = false;
 
 function animate() {
     requestAnimationFrame(animate);
 
     stats.begin();
 
-    if (resizeRendererToDisplaySize(renderer)) {
-        camera.updateAspect(renderer.domElement.clientWidth / renderer.domElement.clientHeight);
+    if (useDevCamera) {
+        renderer.render(scene, devCamera.camera);
+        devCamera.tick();
+    } else {
+        if (resizeRendererToDisplaySize(renderer)) {
+            camera.updateAspect(renderer.domElement.clientWidth / renderer.domElement.clientHeight);
+        }
+    
+        camera.tick();
+    
+        renderer.render(scene, camera.perspective);
     }
-
-    camera.tick();
-
-    renderer.render(scene, camera.perspective);
     stats.end();
 }
 

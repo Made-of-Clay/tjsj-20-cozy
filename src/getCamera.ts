@@ -1,6 +1,7 @@
 import { PerspectiveCamera } from 'three';
 import { getGui } from './getGui';
 import GUI from 'lil-gui';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 const gui = getGui();
 let cameraFolder: GUI;
@@ -61,5 +62,30 @@ export class Camera {
     updateAspect(newAspect: number) {
         this.perspective.aspect = newAspect;
         this.perspective.updateProjectionMatrix();
+    }
+}
+
+export class DevCamera {
+    camera: PerspectiveCamera;
+    controls: OrbitControls;
+
+    constructor(renderCanvas: HTMLCanvasElement) {
+        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(0, 5, 5);
+        this.camera.lookAt(0, 0, 0);
+        this.camera.updateProjectionMatrix();
+
+        // for some reason, OrbitControls messes with lil-gui
+        this.controls = new OrbitControls(this.camera, renderCanvas);
+        this.controls.enableDamping = true;
+    }
+
+    tick() {
+        // this.controls.update();
+    }
+
+    updateAspect(newAspect: number) {
+        this.camera.aspect = newAspect;
+        this.camera.updateProjectionMatrix();
     }
 }

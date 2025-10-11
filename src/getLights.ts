@@ -5,7 +5,7 @@ export function getLights() {
     const gui = getGui();
     const ambientLight = new AmbientLight('white', 0.4);
     const pointLight = new PointLight('white', 20, 100);
-    pointLight.position.set(-2, 2, 2);
+    pointLight.position.set(0, 2, 4);
     pointLight.castShadow = true;
     pointLight.shadow.radius = 4;
     pointLight.shadow.camera.near = 0.1;
