@@ -6,6 +6,7 @@ import { getLights } from './getLights';
 import { getGui } from './getGui';
 import { getRoom } from './getRoom';
 import { Camera, DevCamera } from './getCamera';
+import { Background } from './getBackground';
 
 const gui = getGui();
 
@@ -59,16 +60,9 @@ gui.add({ resetGui }, 'resetGui').name('RESET');
 
 // gui.close();
 
-// const shelfHeight = 4;
-// const bookshelf = new Mesh(
-//     new PlaneGeometry(4, shelfHeight, 10, 10),
-//     new MeshStandardMaterial({
-//         color: 'white',
-//         wireframe: true,
-//     })
-// );
-// bookshelf.position.y = shelfHeight / 2;
-// scene.add(bookshelf);
+// deep_space_skybox
+const background = new Background();
+background.init().then(() => background.object && scene.add(background.object));
 
 const devCamera = new DevCamera(canvas);
 
@@ -86,9 +80,10 @@ function animate() {
         if (resizeRendererToDisplaySize(renderer)) {
             camera.updateAspect(renderer.domElement.clientWidth / renderer.domElement.clientHeight);
         }
-    
+
         camera.tick();
-    
+        background.tick();
+
         renderer.render(scene, camera.perspective);
     }
     stats.end();
