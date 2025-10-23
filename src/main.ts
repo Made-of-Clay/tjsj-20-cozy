@@ -7,6 +7,7 @@ import { getGui } from './getGui';
 import { getRoom } from './getRoom';
 import { Camera, DevCamera } from './getCamera';
 import { Background } from './getBackground';
+import { getProgress } from './Progress';
 
 const gui = getGui();
 
@@ -18,6 +19,12 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = PCFSoftShadowMap;
 const scene = new Scene();
+
+const progress = getProgress();
+progress.onComplete(() => {
+    console.log('All assets loaded!');
+    document.getElementById('loader')?.style.setProperty('opacity', '0');
+});
 
 const { ambientLight, pointLight, pointLightHelper } = getLights();
 scene.add(ambientLight, pointLight, pointLightHelper);
@@ -48,8 +55,13 @@ helpersFolder.add(axesHelper, 'visible').name('axes');
 helpersFolder.add(pointLightHelper, 'visible').name('pointLight');
 
 // Objects
-const room = await getRoom();
-scene.add(room);
+const roomProgressKey = 'room';
+
+progress.track(roomProgressKey);
+getRoom().then(room => {
+    progress.finish(roomProgressKey);
+    scene.add(room)
+});
 
 // reset GUI state button
 function resetGui() {
@@ -58,11 +70,17 @@ function resetGui() {
 }
 gui.add({ resetGui }, 'resetGui').name('RESET');
 
-// gui.close();
+gui.close();
 
-// deep_space_skybox
+const backgroundProgressKey = 'background';
+
+progress.track(backgroundProgressKey);
 const background = new Background();
-background.init().then(() => background.object && scene.add(background.object));
+background.init().then(() => {
+    if (background.object) 
+        scene.add(background.object)
+    progress.finish(backgroundProgressKey);
+});
 
 const devCamera = new DevCamera(canvas);
 

@@ -5,8 +5,28 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Challenge 20: Cozy Place | Three.js Journey</title>
+    <style>
+      #loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #000;
+        color: #fff;
+        opacity: 1;
+        transition: opacity 3s;
+        z-index: 10;
+      }
+    </style>
   </head>
   <body>
+    <div id="loader">
+      Loading the cozy...
+    </div>
     <!-- test comment -->
     <script type="module" src="/src/main.ts"></script>
   </body>
