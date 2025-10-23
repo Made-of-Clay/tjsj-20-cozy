@@ -4,5 +4,5 @@ let loadingManager: LoadingManager;
 
 export function getLoadingManager() {
     return loadingManager
-        || (loadingManager = new LoadingManager(console.log, console.log, console.error));
+        || (loadingManager = new LoadingManager(console.log, undefined, console.error));
 }
