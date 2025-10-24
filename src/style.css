@@ -44,3 +44,42 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
+
+menu {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: var(--controlZ);
+}
+
+menu li {
+  list-style: none;
+  margin: 0;
+  background-color: #333;
+  padding: 0.5rem;
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #777;
+  }
+}
+
+#toggle-music svg {
+  fill: transparent;
+  stroke: var(--color, white);
+  transition: stroke 1.5s;
+}
+#toggle-tools svg {
+  fill: var(--color, white);
+}
