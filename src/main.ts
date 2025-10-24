@@ -8,6 +8,7 @@ import { getRoom } from './getRoom';
 import { Camera, DevCamera } from './getCamera';
 import { Background } from './getBackground';
 import { getProgress } from './Progress';
+import { MusicController } from './MusicController';
 
 const gui = getGui();
 
@@ -24,7 +25,36 @@ const progress = getProgress();
 progress.onComplete(() => {
     console.log('All assets loaded!');
     document.getElementById('loader')?.style.setProperty('opacity', '0');
+    setTimeout(() => {
+        document.getElementById('loader')?.remove();
+    }, 3000);
+    musicController.play();
 });
+
+const musicProgressKey = 'music';
+progress.track(musicProgressKey);
+const musicController = new MusicController();
+musicController.whenLoaded.then(() => {
+    console.log('music loaded')
+    progress.finish(musicProgressKey);
+});
+
+// Handle music toggle
+document.querySelector('#toggle-music')?.addEventListener('click', async () => {
+    const svg = document.querySelector('#toggle-music svg');
+    if (musicController.playing) {
+        svg?.setAttribute('style', '--color: red');
+        await musicController.pause();
+    } else {
+        svg?.setAttribute('style', '--color: white');
+        await musicController.play();
+    }
+});
+
+document.querySelector('menu')?.style.setProperty(
+    '--vol-fade-rate',
+    musicController.volumeFadeRateMs * 0.001 + 's'
+);
 
 const { ambientLight, pointLight, pointLightHelper } = getLights();
 scene.add(ambientLight, pointLight, pointLightHelper);
@@ -86,6 +116,23 @@ const devCamera = new DevCamera(canvas);
 
 const useDevCamera = false;
 
+let showingTools = false;
+document.querySelector('#toggle-tools')?.addEventListener('click', () => {
+    showingTools = !showingTools;
+    handleToolDisplay();
+});
+
+function handleToolDisplay() {
+    if (showingTools) {
+        gui.show();
+        stats.dom.style.display = 'block';
+    } else {
+        gui.hide();
+        stats.dom.style.display = 'none';
+    }
+}
+handleToolDisplay();
+
 function animate() {
     requestAnimationFrame(animate);
 
@@ -104,6 +151,7 @@ function animate() {
 
         renderer.render(scene, camera.perspective);
     }
+
     stats.end();
 }
 
