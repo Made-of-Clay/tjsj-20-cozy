@@ -1,4 +1,4 @@
-import { AxesHelper, EquirectangularReflectionMapping, GridHelper, MeshPhysicalMaterial, MeshStandardMaterial, PCFSoftShadowMap, PMREMGenerator, Scene, WebGLRenderer } from 'three';
+import { AxesHelper, EquirectangularReflectionMapping, GridHelper, MeshPhysicalMaterial, MeshStandardMaterial, PCFSoftShadowMap, PMREMGenerator, Scene, Timer, WebGLRenderer } from 'three';
 import Stats from 'stats.js';
 import { resizeRendererToDisplaySize } from './helpers/responsiveness';
 import './style.css';
@@ -10,6 +10,7 @@ import { Background } from './getBackground';
 import { getProgress } from './Progress';
 import { MusicController } from './MusicController';
 import { findDeepMeshChild } from './findDeepMeshChild';
+import { getSteam } from './getSteam';
 
 const gui = getGui();
 
@@ -132,6 +133,9 @@ Promise.all([pendingBackground, pendingRoom]).then(([, room]) => {
     }
 });
 
+const { steam, tick: steamTick } = getSteam();
+scene.add(steam);
+
 const devCamera = new DevCamera(canvas);
 const cameraParams = {
     devCamera: false,
@@ -164,9 +168,12 @@ function resetGui() {
 }
 gui.add({ resetGui }, 'resetGui').name('RESET');
 
+const timer = new Timer();
+
 function animate() {
     requestAnimationFrame(animate);
 
+    timer.update();
     stats.begin();
 
     if (cameraParams.devCamera) {
@@ -180,9 +187,11 @@ function animate() {
         camera.tick();
         renderer.render(scene, camera.perspective);
     }
-    
+
     background.tick();
     lights.tick();
+    const elapsedTime = timer.getElapsed();
+    steamTick(elapsedTime);
 
     stats.end();
 }
