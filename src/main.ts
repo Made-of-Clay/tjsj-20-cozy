@@ -1,4 +1,4 @@
-import { AxesHelper, GridHelper, PCFSoftShadowMap, Scene, WebGLRenderer } from 'three';
+import { AxesHelper, EquirectangularReflectionMapping, GridHelper, MeshPhysicalMaterial, MeshStandardMaterial, PCFSoftShadowMap, PMREMGenerator, Scene, WebGLRenderer } from 'three';
 import Stats from 'stats.js';
 import { resizeRendererToDisplaySize } from './helpers/responsiveness';
 import './style.css';
@@ -9,6 +9,7 @@ import { Camera, DevCamera } from './getCamera';
 import { Background } from './getBackground';
 import { getProgress } from './Progress';
 import { MusicController } from './MusicController';
+import { findDeepMeshChild } from './findDeepMeshChild';
 
 const gui = getGui();
 
@@ -56,65 +57,88 @@ document.querySelector('menu')?.style.setProperty(
     musicController.volumeFadeRateMs * 0.001 + 's'
 );
 
-const { ambientLight, pointLight, pointLightHelper } = getLights();
-scene.add(ambientLight, pointLight, pointLightHelper);
+const lights = getLights();
+scene.add(...Object.values(lights).filter(obj => typeof obj !== 'function')/*  as any[] */);
 
 const camera = new Camera(canvas);
 
 // ===== 🪄 HELPERS =====
+const helpersFolder = gui.addFolder('Helpers');
+
 const axesHelper = new AxesHelper(4);
 axesHelper.visible = false;
 scene.add(axesHelper);
+helpersFolder.add(axesHelper, 'visible').name('axes');
 
 const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray');
 gridHelper.position.y = -0.01;
 gridHelper.visible = false;
 scene.add(gridHelper);
-
-gui.add(gridHelper, 'visible').name('Grid Visibility');
+helpersFolder.add(gridHelper, 'visible').name('Grid Visibility');
 
 // ===== 📈 STATS & CLOCK =====
 // const clock = new Clock();
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 
-// ==== 🐞 DEBUG GUI ====
-const helpersFolder = gui.addFolder('Helpers');
-gui.addFolder('Helpers');
-helpersFolder.add(axesHelper, 'visible').name('axes');
-helpersFolder.add(pointLightHelper, 'visible').name('pointLight');
-
 // Objects
 const roomProgressKey = 'room';
 
 progress.track(roomProgressKey);
-getRoom().then(room => {
+const pendingRoom = getRoom(scene).then(room => {
     progress.finish(roomProgressKey);
-    scene.add(room)
+    scene.add(room);
+    return room;
 });
-
-// reset GUI state button
-function resetGui() {
-    localStorage.removeItem('guiState');
-    gui.reset();
-}
-gui.add({ resetGui }, 'resetGui').name('RESET');
-
-gui.close();
 
 const backgroundProgressKey = 'background';
 
 progress.track(backgroundProgressKey);
 const background = new Background();
-background.init().then(() => {
+const pendingBackground = background.init().then(() => {
     if (background.object) 
         scene.add(background.object)
     progress.finish(backgroundProgressKey);
 });
 
-const devCamera = new DevCamera(canvas);
+Promise.all([pendingBackground, pendingRoom]).then(([, room]) => {
+    // apply deep space image from background to room material.envMap
+    const sphere = background.object ? findDeepMeshChild(background.object, 'Sphere_Deep_Space_0') : null;
+    const roomMesh = findDeepMeshChild(room, 'Room');
+    if (!sphere || !roomMesh)
+        return console.warn('Background sphere (1) or room (2) could not be found:', sphere, room);
 
-const useDevCamera = false;
+    // Use PMREM to prefilter the equirectangular map so PBR materials respond properly
+    const bgTexture = (sphere.material as MeshPhysicalMaterial).map;
+    console.log(bgTexture);
+    if (bgTexture) {
+        bgTexture.mapping = EquirectangularReflectionMapping;
+
+        const pmrem = new PMREMGenerator(renderer);
+        pmrem.compileEquirectangularShader();
+        const envRenderTarget = pmrem.fromEquirectangular(bgTexture);
+        const envMap = envRenderTarget.texture;
+
+        const mat = roomMesh.material as MeshStandardMaterial;
+        mat.envMap = envMap;
+        mat.envMapIntensity = 0.6;
+        mat.metalness = Math.max((mat as any).metalness ?? 0, 0.05);
+        mat.roughness = Math.min((mat as any).roughness ?? 1, 0.9);
+        mat.needsUpdate = true;
+
+        pmrem.dispose();
+    } else {
+        console.warn('background texture not found on sphere');
+    }
+});
+
+const devCamera = new DevCamera(canvas);
+const cameraParams = {
+    devCamera: false,
+};
+gui.folders.find(folder => folder._title === 'Camera')
+    ?.add(cameraParams, 'devCamera')
+    ?.name('Use Dev Camera');
 
 let showingTools = false;
 document.querySelector('#toggle-tools')?.addEventListener('click', () => {
@@ -133,12 +157,19 @@ function handleToolDisplay() {
 }
 handleToolDisplay();
 
+// reset GUI state button
+function resetGui() {
+    localStorage.removeItem('guiState');
+    gui.reset();
+}
+gui.add({ resetGui }, 'resetGui').name('RESET');
+
 function animate() {
     requestAnimationFrame(animate);
 
     stats.begin();
 
-    if (useDevCamera) {
+    if (cameraParams.devCamera) {
         renderer.render(scene, devCamera.camera);
         devCamera.tick();
     } else {
@@ -147,10 +178,11 @@ function animate() {
         }
 
         camera.tick();
-        background.tick();
-
         renderer.render(scene, camera.perspective);
     }
+    
+    background.tick();
+    lights.tick();
 
     stats.end();
 }

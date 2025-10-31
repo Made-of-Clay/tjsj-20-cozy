@@ -68,9 +68,10 @@ export class Camera {
 export class DevCamera {
     camera: PerspectiveCamera;
     controls: OrbitControls;
+    enabled = false;
 
     constructor(renderCanvas: HTMLCanvasElement) {
-        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new PerspectiveCamera(75, renderCanvas.clientWidth / renderCanvas.clientHeight, 0.1, 1000);
         this.camera.position.set(0, 5, 5);
         this.camera.lookAt(0, 0, 0);
         this.camera.updateProjectionMatrix();
@@ -78,10 +79,16 @@ export class DevCamera {
         // for some reason, OrbitControls messes with lil-gui
         this.controls = new OrbitControls(this.camera, renderCanvas);
         this.controls.enableDamping = true;
+
+        const gui = getGui();
+        if (!cameraFolder) {
+            cameraFolder = gui.addFolder('Camera');
+            cameraFolder.add(this, 'enabled').name('Enable Dev Camera');
+        }
     }
 
     tick() {
-        // this.controls.update();
+        this.controls.update();
     }
 
     updateAspect(newAspect: number) {
